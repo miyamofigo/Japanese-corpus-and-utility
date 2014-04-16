@@ -334,3 +334,57 @@ def node2lambda(dg, node, rflag=False, count=0):
     func_lst = [func_style(*name) for name in name_arg_lst]
     expr = prefix + bracket(' & '.join(func_lst))
     yield expr
+
+def getdepth(graph, current=None):
+  if not current:
+    current = graph.root
+  depth, additional = 0, 0
+  for index in current['deps']:
+    depth += 1
+    deepest = 0
+    current = graph.nodelist[index]
+    additional = getdepth(graph, current)
+    if additional > deepest:
+      deepest = additional
+  depth += additional
+  return depth 
+
+def collectTranslations(graph, limit=-1):
+  d = getdepth(graph)
+  lst = []
+  for i in range(d):
+    if i == limit:
+      break
+    for expr in simple_translation(graph, limit=i):
+      lst.append(expr)
+  return set(lst) 
+      
+if __name__ == '__main__':
+# url = "http://my.cosme.net/open_entry_reviewlist/list/user_id/"
+# user_i = 2651755
+# url += str(user_id)
+# UserAgent =\
+#   "scraping with python2. you can contact me via miyamofigo@gmail.com"
+  #opener = urllib2.build_opener()
+  #opener.addheaders = [('User-Agent', UserAgent)]
+# t_pattern = re.compile(r'<p class="read".*?>((.|\n)*?)</p>')
+# r_pattern = re.compile(r'<a class=\'pageNext\' href=\'(http.*)\'.*?>')
+# review_list = getTextsFromWebPages(url, opener, t_pattern, 
+#                                   r_pattern, encoding='utf-8')
+  #review_list = getTextsFromWebPages(
+  # url, opener, t_pattern, encoding='utf-8')
+  #for review in review_list:
+  # print trimText(review)
+        
+#   scrape(url, t_pattern, UserAgent, r_pattern, 
+#        path='./reviews/', fname_prefix=str(user_id))
+  #cabocha = CaboCha.Parser('--charset=UTF8')
+  #sent = u'太郎はこの本を持っていた女性に渡した。'.encode('utf-8')
+  #tree = cabocha.parse(sent)
+  #ctree = CaboChaTree(tree)
+  #print ctree  
+  seq = pyknp(u"太郎はこの本を持っていた女性に渡した。")
+  dg = KNPDependencyGraph.parse(KNPTree.parse(seq))
+  exprset = collectTranslations(dg)
+  for expr in exprset:
+    print expr 
