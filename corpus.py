@@ -170,9 +170,3 @@ class JapaneseCorpusReader(CorpusReader):
                                       self._sent_tokenizer,
                                       self._case_parser)
                    for (fileid, enc) in self.abspaths(fileids, True)])
-  
-if __name__ == '__main__':
-  jpcorpus = JapaneseCorpusReader('./reviews', '2651755_0.txt')
-  for dg in jpcorpus.parsed_sents2():
-    dg.debug() 
-  #KNPParser().parse("すもももももももものうち").debug()
