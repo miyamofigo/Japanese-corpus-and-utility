@@ -304,14 +304,14 @@ def simple_translation(graph, node=None, depth=0, limit=0,
         expr[-1] = (fsymbol, expr[-1][1])
         func_lst = [func_style(*name) for name in expr]     
         prefix = '\\' + fsymbol + ' ' + var + '. '
-        expr = prefix + bracket(' & '.join(func_lst))
+        parent_expr = prefix + bracket(' & '.join(func_lst))
         curr = graph.nodelist[node['deps'][i]]
         depth += 1
         var_count += 1
         func_count += 1
         for arg_expr in simple_translation(graph, curr, depth, limit,
                                            var_count, func_count):
-          expr = expr + bracket(arg_expr)
+          expr = parent_expr + bracket(arg_expr)
           yield expr  
 
 def func_style(fname, arg):
@@ -358,3 +358,33 @@ def collectTranslations(graph, limit=-1):
     for expr in simple_translation(graph, limit=i):
       lst.append(expr)
   return set(lst) 
+      
+if __name__ == '__main__':
+  #url = "http://my.cosme.net/open_entry_reviewlist/list/user_id/"
+  #user_id = 2651755
+  #url += str(user_id)
+  #UserAgent =\
+  # "scraping with python2. you can contact me via miyamofigo@gmail.com"
+  #opener = urllib2.build_opener()
+  #opener.addheaders = [('User-Agent', UserAgent)]
+  #t_pattern = re.compile(r'<p class="read".*?>((.|\n)*?)</p>')
+  #r_pattern = re.compile(r'<a class=\'pageNext\' href=\'(http.*)\'.*?>')
+  #review_list = getTextsFromWebPages(url, opener, t_pattern, 
+  #                                 r_pattern, encoding='utf-8')
+  #review_list = getTextsFromWebPages(
+  # url, opener, t_pattern, encoding='utf-8')
+  #for review in review_list:
+  # print trimText(review)
+  #     
+  #scrape(url, t_pattern, UserAgent, r_pattern, 
+  #      path='./reviews/', fname_prefix=str(user_id))
+  #cabocha = CaboCha.Parser('--charset=UTF8')
+  #sent = u'太郎はこの本を持っていた女性に渡した。'.encode('utf-8')
+  #tree = cabocha.parse(sent)
+  #ctree = CaboChaTree(tree)
+  #print ctree  
+  seq = pyknp(u"太郎はこの本を持っていた女性に渡した。")
+  dg = KNPDependencyGraph.parse(KNPTree.parse(seq))
+  exprset = collectTranslations(dg)
+  for expr in exprset:
+    print expr 
