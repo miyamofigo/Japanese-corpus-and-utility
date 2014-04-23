@@ -377,37 +377,3 @@ def collectTranslations(graph, limit=-1):
     for expr in simple_translation(graph, limit=i):
       lst.append(expr)
   return set(lst) 
-      
-if __name__ == '__main__':
-  #url = "http://my.cosme.net/open_entry_reviewlist/list/user_id/"
-  #user_id = 2651755
-  #url += str(user_id)
-  #UserAgent =\
-  # "scraping with python2. you can contact me via miyamofigo@gmail.com"
-  #opener = urllib2.build_opener()
-  #opener.addheaders = [('User-Agent', UserAgent)]
-  #t_pattern = re.compile(r'<p class="read".*?>((.|\n)*?)</p>')
-  #r_pattern = re.compile(r'<a class=\'pageNext\' href=\'(http.*)\'.*?>')
-  #review_list = getTextsFromWebPages(url, opener, t_pattern, 
-  #                                 r_pattern, encoding='utf-8')
-  #review_list = getTextsFromWebPages(
-  # url, opener, t_pattern, encoding='utf-8')
-  #for review in review_list:
-  # print trimText(review)
-  #     
-  #scrape(url, t_pattern, UserAgent, r_pattern, 
-  #      path='./reviews/', fname_prefix=str(user_id))
-  #cabocha = CaboCha.Parser('--charset=UTF8')
-  #sent = u'太郎はこの本を持っていた女性に渡した。'.encode('utf-8')
-  #tree = cabocha.parse(sent)
-  #ctree = CaboChaTree(tree)
-  #print ctree  
-  seq = pyknp(u"太郎はこの本とミカンを持っていた女性に渡した。")
-  trees = KNPTree.parse(seq)
-  #for tree in trees:
-  # print tree
-  dg = KNPDependencyGraph.parse(trees)
-  dg.debug()
-  exprset = collectTranslations(dg)
-  for expr in exprset:
-    print expr
