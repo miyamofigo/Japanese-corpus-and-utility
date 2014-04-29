@@ -377,3 +377,40 @@ def collectTranslations(graph, limit=-1):
     for expr in simple_translation(graph, limit=i):
       lst.append(expr)
   return set(lst) 
+
+def word_features(words, features={}):
+  return features.update({word:True for word in words 
+                          if word not in features})
+
+def phrase_features(trees, regex=None, n=0, features={}):
+# CaboChaTree instance is expected for trees argument
+  if not regex:
+    regex = re.compile(u'[。！？、]')
+  def fill(phrase, features=features):
+    try: 
+      if features[phrase]:
+        pass
+    except KeyError:
+      features[phrase] = True
+  # this function connect words and trim them -> returns a phrase
+  def prepare(leaves, regex=regex):
+    # get rid of pos information
+    words = map(lambda x: x.split('/')[0], leaves)
+    phrase = ''.join(words)
+    phrase = regex.sub(u'', unicode(phrase)).encode('utf-8')
+    return phrase 
+  for sent_tree in trees:
+    if n > 1:
+      chunk_tups = nltk.ngrams(sent_tree, n) 
+      for tup in chunk_tups:
+        leaves_lst = map(lambda x: x.leaves(), tup) 
+        leaves = []
+        for i in range(len(leaves_lst)):
+          leaves.extend(leaves_lst[i])
+        phrase = prepare(leaves)
+        fill(phrase)
+    else:
+      for chunk in sent_tree:
+        phrase = prepare(chunk.leaves())
+        fill(phrase)
+    return features
