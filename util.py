@@ -106,13 +106,16 @@ class CaboChaTree(Tree):
     if not istree and isinstance(proxy, CaboCha.Tree):
       raise TypeError("expected CaboCha.Tree proxy..")  
     trees = []
-    for i in range(proxy.chunk_size()):
+    size = proxy.chunk_size()
+    for i in range(size):
       chunk = proxy.chunk(i)    
       children = []
       for j in range(chunk.token_size):
         token_pos = chunk.token_pos + j
         token = proxy.token(token_pos) 
         children.append(token.surface + '/' + token.feature)
+      if i == size - 1:
+        i = -1
       trees.append(CaboChaTree(chunk, children, i))
     return trees
 
@@ -279,8 +282,8 @@ class KNPDependencyGraph(object):
 def simple_translation(graph, node=None, depth=0, limit=0,
                        var_count=0, func_count=0):
   if not isinstance(graph, KNPDependencyGraph):
-    raise TypeError("expected KNPDependencyGraph instance for \
-                       the first argument")
+    raise TypeError("expected KNPDependencyGraph instance for "
+                    "the first argument")
   if depth == 0:
     if node:
       curr = node
@@ -414,3 +417,45 @@ def phrase_features(trees, regex=None, n=0, features={}):
         phrase = prepare(chunk.leaves())
         fill(phrase)
     return features
+
+# get features from cabocha-tree dependency.
+def cabo_deps_features(cabo_trees, regex=None, n=2, features={}):
+  sample = cabo_trees[0]
+  if not isinstance(sample, CaboChaTree) or not sample.node == 'S': 
+    raise TypeError("a parsed sentence list by CaboChaTree "
+                    "is expected for cabo_tree argument.")
+  if n < 2:
+    raise ValueError("a number which equals to larger than 2 "
+                     "is expected for n argument")
+  if not regex:
+    regex = re.compile(u'[。！？、]')
+  lst = []  
+  for cabo_tree in cabo_trees:
+    for chunk in cabo_tree:
+      count = n
+      chunks = []
+      curr = chunk
+      while count:
+        chunks.append(curr)
+        try:
+          curr = cabo_tree[curr.link]
+        except AttributeError:
+          if count > 1:
+            chunks = []
+            break
+        count -= 1
+      if chunks:
+        lst.append(tuple(chunks))
+  for chunk_tup in lst:
+    tagged_words_lst = map(lambda x: x.leaves(), chunk_tup)
+    words_lst = [map(lambda x: x.split('/')[0], tagged_words) 
+                 for tagged_words in tagged_words_lst]   
+    phrase_lst = [''.join(words) for words in words_lst] 
+    integrated_phrase =\
+      regex.sub(u'', unicode(''.join(phrase_lst))).encode('utf-8')  
+    try:
+      if features[integrated_phrase]:
+        pass
+    except KeyError:
+      features[integrated_phrase] = True
+  return features 
