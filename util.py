@@ -371,15 +371,17 @@ def getdepth(graph, current=None):
   depth += additional
   return depth 
 
-def collectTranslations(graph, limit=-1):
+def collectTranslations(graph, limit=-1, diff=False):
   d = getdepth(graph)
-  lst = []
+  res = set()
   for i in range(d):
     if i == limit:
       break
     for expr in simple_translation(graph, limit=i):
-      lst.append(expr)
-  return set(lst) 
+      res.add(expr)
+  if diff and limit >= 2:
+    res = res.difference(collectTranslations(graph, limit-1))
+  return res 
 
 def word_features(words, features={}):
   return features.update({word:True for word in words 
@@ -457,3 +459,22 @@ def cabo_deps_features(cabo_trees, regex=None, n=2, features={}):
     except KeyError:
       features[phrases] = True
   return features 
+
+def knp_deps_features(graphs, regex=None, n=-1, features={},
+                      parser=nltk.LogicParser()):
+  if not isinstance(graphs, list) and\
+      not isinstance(graphs[0], KNPDependencyGraph):
+    raise TypeError("a list of KNPDependencyGraph is expected "
+                    "as the first argument.")
+  if not regex:
+    regex = re.compile(u'[。！？、]')
+  for graph in graphs:
+    for expr in collectTranslations(graph, n):
+      expr = regex.sub(u'', unicode(expr)).encode('utf_8')
+      expr_obj = parser.parse(expr)
+      try:
+        if features[expr_obj]:
+          pass
+      except KeyError:
+        features[expr_obj] = True
+  return features
