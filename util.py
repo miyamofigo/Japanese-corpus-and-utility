@@ -241,6 +241,8 @@ class KNPDependencyGraph(object):
   # build a dependency graph from a nodelist only instance
   def build(self):
     lst = self.nodelist
+    if not lst:
+      return None
     while len(lst) > 1:
       parents = [] 
       childs = []
@@ -257,7 +259,7 @@ class KNPDependencyGraph(object):
       lst = parents 
     root = lst[0]
     root['rel'] = 'TOP'
-    return root 
+    return root
   def debug(self, curr=None, depth=0):
     if not curr:
       if not self.root:
@@ -358,6 +360,8 @@ def node2lambda(dg, node, rflag=False, count=0):
     yield expr
 
 def getdepth(graph, current=None):
+  if not graph.root:
+    return 0
   if not current:
     current = graph.root
   depth, additional = 0, 0
@@ -470,11 +474,13 @@ def knp_deps_features(graphs, regex=None, n=-1, features={},
     regex = re.compile(u'[。！？、]')
   for graph in graphs:
     for expr in collectTranslations(graph, n):
-      expr = regex.sub(u'', unicode(expr)).encode('utf_8')
-      expr_obj = parser.parse(expr)
       try:
+        expr = regex.sub(u'', unicode(expr)).encode('utf_8')
+        expr_obj = parser.parse(expr)
         if features[expr_obj]:
           pass
       except KeyError:
         features[expr_obj] = True
+      except nltk.sem.logic.ParseException:
+        pass
   return features
