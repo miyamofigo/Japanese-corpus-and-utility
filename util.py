@@ -484,3 +484,28 @@ def knp_deps_features(graphs, regex=None, n=-1, features={},
       except nltk.sem.logic.ParseException:
         pass
   return features
+
+def get_frequent_word(word_pos_lst, n):
+  words = [ pos_elms[6] for pos_elms in map(
+              lambda x: (x[1].split(',')), word_pos_lst
+            ) if pos_elms[0] not in ['助詞', '記号', '助動詞']
+                and  pos_elms[6] != '*']
+  regex = re.compile(u'[。！？、]')
+  fdist = nltk.FreqDist(map(
+            lambda x: regex.sub(u'', unicode(x)).encode('utf_8'), words))
+  return fdist.items()[:n]
+
+def get_frequent_phrase(tree_lst, n):
+  if not isinstance(tree_lst[0], CaboChaTree):
+    raise TypeError("CaboChaTree list is expected for tree_lst arg")
+  regex = re.compile(u'[。！？、]')
+  phrases = []
+  for tree in tree_lst:
+    for chunk in tree:
+      leaves = [regex.sub(u'', unicode(leaf)).encode('utf_8')
+                for leaf in chunk.leaves()] 
+      phrase = ''.join(map(lambda x: x.split('/')[0], leaves))
+      if phrase:
+        phrases.append(phrase)
+  fdist = nltk.FreqDist(phrases)
+  return fdist.items()[:n]
