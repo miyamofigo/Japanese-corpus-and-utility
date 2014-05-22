@@ -75,21 +75,24 @@ class JapaneseCorpusView(StreamBackedCorpusView):
     StreamBackedCorpusView.__init__(self, corpus_file, encoding=encoding)
   def read_block(self, stream):
     block = []
-    for sent_str in self._sent_tokenizer.tokenize(stream.read()):
-      if self._parsed_by_case:
-        dg = self._case_parser.parse(sent_str)
-        block.append(dg)  
-      elif self._parsed:
-        tree = self._syntax_parser.parse(sent_str)
-        block.append(tree)  
-      else:
-        sent = self._word_tokenizer.tokenize(sent_str)
-        if not self._tagged:
-          sent = [w for (w,t) in sent]
-        if self._group_by_sent:
-          block.append(sent)
+    try:
+      for sent_str in self._sent_tokenizer.tokenize(stream.read()):
+        if self._parsed_by_case:
+          dg = self._case_parser.parse(sent_str)
+          block.append(dg)  
+        elif self._parsed:
+          tree = self._syntax_parser.parse(sent_str)
+          block.append(tree)  
         else:
-          block.extend(sent)
+          sent = self._word_tokenizer.tokenize(sent_str)
+          if not self._tagged:
+            sent = [w for (w,t) in sent]
+          if self._group_by_sent:
+            block.append(sent)
+          else:
+            block.extend(sent)
+    except UnicodeDecodeError:
+      pass
     return block
 
 jp_sent_tokenizer =\
