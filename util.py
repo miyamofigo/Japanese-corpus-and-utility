@@ -16,10 +16,34 @@ from nltk.text import Text
 
 
 import urllib2, time
-def getTextsFromWebPages(url, urlopener, t_pattern, r_pattern=None,
-                         encoding=None, interval=5):
-  text_list = []
-  file = urlopener.open(url)
+class tail_recursive(object):
+  def __init__(self, func):
+    self.func = func
+    self.firstcall = True
+    self.CONTINUE = object()
+  
+  def __call__(self, *args, **kwargs):
+    if self.firstcall:
+      func = self.func
+      CONTINUE = self.CONTINUE
+      self.firstcall = False
+      try:
+        while True:
+          result = func(*args, **kwargs)
+          if result is CONTINUE:
+            args, kwargs = self.argskwargs
+          else:
+            return result
+      finally:
+        self.firstcall = True
+    else:
+      self.argskwargs = args, kwargs
+      return self.CONTINUE
+
+@tail_recursive
+def get_text_from_webpages(url, opener, text_reg, url_reg=None, 
+                           res=None, encoding='utf-8', interval=5):
+  file = opener.open(url)
   html = file.read()
   if encoding:
     charset = file.headers.getparam('charset')
@@ -29,20 +53,33 @@ def getTextsFromWebPages(url, urlopener, t_pattern, r_pattern=None,
       except:
         print "not encoded..........."
   file.close()
-  matched_list = t_pattern.findall(html)
-  if matched_list:
-    text_list += [match[0] for match in matched_list]
-  if r_pattern:
-    nextPageUrlMatch = r_pattern.search(html) 
-    if nextPageUrlMatch:
-      if not interval >= 1:
+  if isinstance(text_reg, list):
+    text_regs = text_reg
+  else:
+    text_regs = [text_reg]
+  if res is None:
+    res = []
+  for i, reg in enumerate(text_regs):
+    try:  
+      matched_lst = reg.findall(html)
+      res[i].extend(matched_lst)
+    except IndexError:
+      res.append([])
+      res[i].extend(matched_lst)
+  if not url_reg:
+    return res   
+  else:
+    matched_obj = url_reg.search(html) 
+    if not interval >= 1:
         print "at least one second is required for interval..."
         return -1
+    if not matched_obj:
+      return res
+    else:
+      next_url = matched_obj.group(1)
       time.sleep(interval)
-      nextPageUrl = nextPageUrlMatch.group(1)
-      text_list += getTextsFromWebPages(nextPageUrl, urlopener, t_pattern, 
-                                        r_pattern, encoding, interval)
-  return text_list
+      return get_text_from_webpages(next_url, opener, text_regs, url_reg,
+                                    res, encoding, interval) 
 
 def trimText(text, regexpObj=None):
   if regexpObj: 
